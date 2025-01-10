@@ -6,9 +6,6 @@ use crate::native_tls::{TlsConnector, TlsStream};
 use crate::request::ParsedRequest;
 use crate::{Error, Method, ResponseLazy};
 
-#[cfg(feature = "once_cell")]
-use once_cell::sync::Lazy;
-
 use std::env;
 use std::io::{self, Read, Write};
 use std::net::{TcpStream, ToSocketAddrs};
@@ -20,10 +17,11 @@ use {
     rustls::{self, ClientConfig, ClientConnection, StreamOwned},
     std::convert::TryFrom,
     std::sync::Arc,
+    std::sync::LazyLock,
 };
 
 #[cfg(feature = "rustls")]
-static CONFIG: Lazy<Arc<ClientConfig>> = Lazy::new(|| {
+static CONFIG: LazyLock<Arc<ClientConfig>> = LazyLock::new(|| {
     let config: ClientConfig;
 
     // Try to load native certs

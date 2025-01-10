@@ -19,19 +19,22 @@ maintenance = { status = "passively-maintained" }
 [dependencies]
 # For the urlencoding feature:
 urlencoding = { version = "2.1.0", optional = true }
+
 # For the punycode feature:
 punycode = { version = "0.4.1", optional = true }
+
 # For the json-using-serde feature:
 serde = { version = "1.0.101", optional = true }
 serde_json = { version = "1.0.0", optional = true }
+
 # For the proxy feature:
 base64 = { version = "0.22", optional = true }
+
 # For the https features:
-rustls = { version = "0.21.1", optional = true }
-rustls-native-certs = { version = "0.6.1", optional = true }
+rustls = { version = "0.23", optional = true }
+rustls-platform-verifier = { version = "0.5", optional = true }
 once_cell = { version = "1.14.0", optional = true }
-webpki-roots = { version = "0.25.2", optional = true }
-rustls-webpki = { version = "0.101.0", optional = true }
+webpki-roots = { version = "0.26", optional = true }
 openssl = { version = "0.10.29", optional = true }
 log = { version = "0.4.0" }
 openssl-probe = { version = "0.1", optional = true }
@@ -46,8 +49,8 @@ features = ["json-using-serde", "proxy", "https", "punycode"]
 
 [features]
 https = ["https-rustls"]
-https-rustls = ["rustls", "once_cell", "webpki-roots", "rustls-webpki"]
-https-rustls-probe = ["rustls", "once_cell", "rustls-native-certs"]
+https-rustls = ["rustls", "once_cell", "webpki-roots"]
+https-rustls-probe = ["rustls", "once_cell", "rustls-platform-verifier"]
 https-bundled = ["openssl/vendored"]
 https-bundled-probe = ["https-bundled", "openssl-probe"]
 https-native = ["native-tls"]

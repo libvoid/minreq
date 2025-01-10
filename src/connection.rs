@@ -5,49 +5,46 @@
 use crate::native_tls::{TlsConnector, TlsStream};
 use crate::request::ParsedRequest;
 use crate::{Error, Method, ResponseLazy};
+
 #[cfg(feature = "once_cell")]
 use once_cell::sync::Lazy;
-#[cfg(feature = "rustls")]
-use rustls::{self, ClientConfig, ClientConnection, RootCertStore, ServerName, StreamOwned};
-#[cfg(feature = "rustls")]
-use std::convert::TryFrom;
+
 use std::env;
 use std::io::{self, Read, Write};
 use std::net::{TcpStream, ToSocketAddrs};
-#[cfg(feature = "rustls")]
-use std::sync::Arc;
 use std::time::{Duration, Instant};
-#[cfg(feature = "rustls-webpki")]
-use webpki_roots::TLS_SERVER_ROOTS;
+
+#[cfg(feature = "rustls")]
+use {
+    rustls::pki_types::ServerName,
+    rustls::{self, ClientConfig, ClientConnection, StreamOwned},
+    std::convert::TryFrom,
+    std::sync::Arc,
+};
 
 #[cfg(feature = "rustls")]
 static CONFIG: Lazy<Arc<ClientConfig>> = Lazy::new(|| {
-    let mut root_certificates = RootCertStore::empty();
+    let config: ClientConfig;
 
     // Try to load native certs
     #[cfg(feature = "https-rustls-probe")]
-    if let Ok(os_roots) = rustls_native_certs::load_native_certs() {
-        for root_cert in os_roots {
-            // Ignore erroneous OS certificates, there's nothing
-            // to do differently in that situation anyways.
-            let _ = root_certificates.add(&rustls::Certificate(root_cert.0));
-        }
+    {
+        use rustls_platform_verifier::ConfigVerifierExt;
+        config = ClientConfig::with_platform_verifier();
     }
 
-    #[cfg(feature = "rustls-webpki")]
-    #[allow(deprecated)] // Need to use add_server_trust_anchors to compile with rustls 0.21.1
-    root_certificates.add_server_trust_anchors(TLS_SERVER_ROOTS.iter().map(|ta| {
-        rustls::OwnedTrustAnchor::from_subject_spki_name_constraints(
-            ta.subject,
-            ta.spki,
-            ta.name_constraints,
-        )
-    }));
+    #[cfg(feature = "webpki-roots")]
+    {
+        use rustls::RootCertStore;
+        let root_certificates = RootCertStore {
+            roots: webpki_roots::TLS_SERVER_ROOTS.to_vec(),
+        };
 
-    let config = ClientConfig::builder()
-        .with_safe_defaults()
-        .with_root_certificates(root_certificates)
-        .with_no_client_auth();
+        config = ClientConfig::builder()
+            .with_root_certificates(root_certificates)
+            .with_no_client_auth();
+    }
+
     Arc::new(config)
 });
 
@@ -169,7 +166,7 @@ impl Connection {
 
             // Rustls setup
             log::trace!("Setting up TLS parameters for {}.", self.request.url.host);
-            let dns_name = match ServerName::try_from(&*self.request.url.host) {
+            let dns_name = match ServerName::try_from(self.request.url.host.clone()) {
                 Ok(result) => result,
                 Err(err) => return Err(Error::IoError(io::Error::new(io::ErrorKind::Other, err))),
             };

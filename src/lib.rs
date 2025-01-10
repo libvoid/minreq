@@ -238,15 +238,12 @@ extern crate log;
 extern crate native_tls;
 #[cfg(feature = "openssl-probe")]
 extern crate openssl_probe;
-#[cfg(feature = "webpki-roots")]
-extern crate webpki;
-#[cfg(feature = "webpki-roots")]
-extern crate webpki_roots;
-
 #[cfg(feature = "json-using-serde")]
 extern crate serde;
 #[cfg(feature = "json-using-serde")]
 extern crate serde_json;
+#[cfg(feature = "webpki-roots")]
+extern crate webpki_roots;
 
 mod connection;
 mod error;

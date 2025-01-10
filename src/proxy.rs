@@ -88,7 +88,7 @@ impl Proxy {
         let authorization = if let Some(user) = &self.user {
             match self.kind {
                 ProxyKind::Basic => {
-                    use base64::{Engine as _};
+                    use base64::Engine as _;
 
                     let creds = if let Some(password) = &self.password {
                         base64::prelude::BASE64_STANDARD.encode(format!("{}:{}", user, password))
